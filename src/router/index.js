@@ -5,6 +5,7 @@ Vue.use(VueRouter)
 
 // 导入子组件
 import Login from '@/views/login'
+import Layout from '@/views/layout'
 
 const router = new VueRouter({
     routes: [{
@@ -15,7 +16,12 @@ const router = new VueRouter({
             path: '/login',
             component: Login
         },
+        {
+            path: '/layout',
+            component: Layout
+        },
     ]
+
 })
 
 export default router
