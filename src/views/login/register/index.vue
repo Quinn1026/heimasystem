@@ -144,6 +144,7 @@ export default {
     dialogVisible(newValue) {
       if (!newValue) {
         this.$refs.registerForm.resetFields();
+        this.imageUrl = "";
       }
     }
   },

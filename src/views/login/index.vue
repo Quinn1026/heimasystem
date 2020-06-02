@@ -136,7 +136,7 @@ export default {
           });
           let token = res.data.data.token;
           setToken(token);
-          this.$router.push("/layout");
+          this.$router.push("/layout/user");
         } else {
           this.$message({
             message: res.data.message,

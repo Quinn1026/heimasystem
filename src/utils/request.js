@@ -32,7 +32,7 @@ axios.interceptors.request.use(function (config) {
 axios.interceptors.response.use(function (response) {
     // 对响应数据做点什么
     // 如果token过期了 token参数错误  response.data.code == 206
-    console.log(response);
+    // console.log(response);
     if (response.data.code == 206) { // 移出本地token并重定向到登陆页
         removeToken();
         router.push('/login');
