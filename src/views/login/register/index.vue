@@ -3,6 +3,20 @@
     <el-dialog :visible.sync="dialogVisible" center width="600px">
       <div class="register-header" slot="title">用户注册</div>
       <el-form :model="registerForm" ref="registerForm" label-width="100px" :rules="rules">
+        <el-form-item label="头像" prop="avatar">
+          <!-- upload的name字段必须写 -->
+          <el-upload
+            class="avatar-uploader"
+            :action="avatarUrl"
+            name="image"
+            :show-file-list="false"
+            :on-success="handleAvatarSuccess"
+            :before-upload="beforeAvatarUpload"
+          >
+            <img v-if="imageUrl" :src="imageUrl" class="avatar" />
+            <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+          </el-upload>
+        </el-form-item>
         <el-form-item label="昵称" prop="username">
           <el-input v-model.trim="registerForm.username" placeholder="请输入昵称"></el-input>
         </el-form-item>
@@ -49,6 +63,8 @@ export default {
   data() {
     return {
       dialogVisible: false,
+      imageUrl: "",
+      avatarUrl: process.env.VUE_APP_BASEURL + "/uploads",
       captchaUrl: process.env.VUE_APP_BASEURL + "/captcha?type=sendsms",
       registerForm: {
         username: "",
@@ -60,6 +76,7 @@ export default {
         code: ""
       },
       rules: {
+        avatar: [{ required: true, message: "请添加头像", trigger: "change" }],
         username: [
           { required: true, message: "请输入用户名", trigger: "blur" }
         ],
@@ -106,8 +123,19 @@ export default {
           { min: 4, max: 4, message: "图形码为4个字符", trigger: "blur" }
         ],
         rcode: [
-          { required: true, message: "请输入验证码", trigger: "blur" },
-          { min: 4, max: 4, message: "验证码为4个字符", trigger: "blur" }
+          {
+            required: true,
+            validator: (rule, value, callback) => {
+              if (!value) {
+                return callback(new Error("验证码不能为空"));
+              }
+              if (!Number.isInteger(value)) {
+                return callback(new Error("验证码为数字"));
+              }
+              callback();
+            },
+            trigger: "change"
+          }
         ]
       }
     };
@@ -120,7 +148,25 @@ export default {
     }
   },
   methods: {
-    submit() {},
+    submit() {
+      // 先验证表单
+      this.$refs.registerForm.validate(async valid => {
+        if (!valid) return;
+        const res = await this.$axios.post("/register", this.registerForm);
+        if (res.data.code == 200) {
+          this.$message({
+            message: "注册成功~",
+            type: "success"
+          });
+          this.dialogVisible = false;
+        } else {
+          this.$message({
+            message: res.data.message,
+            type: "error"
+          });
+        }
+      });
+    },
     getCode() {
       this.captchaUrl += "&r=" + Math.random();
     },
@@ -136,6 +182,26 @@ export default {
         this.$message("验证码: " + captcha);
         this.registerForm.rcode = captcha;
       }
+    },
+    handleAvatarSuccess(res, file) {
+      // console.log(res, file);
+      this.imageUrl = process.env.VUE_APP_BASEURL + "/" + res.data.file_path;
+      this.registerForm.avatar = res.data.file_path;
+    },
+    beforeAvatarUpload(file) {
+      const isJPG =
+        file.type === "image/jpeg" ||
+        file.type === "image/png" ||
+        file.type === "image/gif";
+      const isLt2M = file.size / 1024 / 1024 < 2;
+
+      if (!isJPG) {
+        this.$message.error("上传头像图片只能是 JPG/PNG/GIF 格式!");
+      }
+      if (!isLt2M) {
+        this.$message.error("上传头像图片大小不能超过 2MB!");
+      }
+      return isJPG && isLt2M;
     }
   }
 };
@@ -155,6 +221,29 @@ export default {
   }
   .el-dialog__headerbtn .el-dialog__close {
     color: #fff;
+  }
+  .avatar-uploader .el-upload {
+    border: 1px dashed #d9d9d9;
+    border-radius: 6px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+  .avatar-uploader .el-upload:hover {
+    border-color: #409eff;
+  }
+  .avatar-uploader-icon {
+    font-size: 28px;
+    color: #8c939d;
+    width: 178px;
+    height: 178px;
+    line-height: 178px;
+    text-align: center;
+  }
+  .avatar {
+    width: 178px;
+    height: 178px;
+    display: block;
   }
 }
 </style>
