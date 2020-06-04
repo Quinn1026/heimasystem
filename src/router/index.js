@@ -35,23 +35,38 @@ const router = new VueRouter({
             component: Layout,
             children: [{
                     path: 'user',
-                    component: User
+                    component: User,
+                    meta: {
+                        title: '用户列表'
+                    }
                 },
                 {
                     path: 'enterprise',
-                    component: Enterprise
+                    component: Enterprise,
+                    meta: {
+                        title: '企业列表'
+                    }
                 },
                 {
                     path: 'subject',
-                    component: Subject
+                    component: Subject,
+                    meta: {
+                        title: '学科列表'
+                    }
                 },
                 {
                     path: 'question',
-                    component: Question
+                    component: Question,
+                    meta: {
+                        title: '题库列表'
+                    }
                 },
                 {
                     path: 'chart',
-                    component: Chart
+                    component: Chart,
+                    meta: {
+                        title: '数据预览'
+                    }
                 }
             ]
         },
@@ -75,6 +90,10 @@ router.beforeEach((to, from, next) => {
         }
     }
 });
-
+// 全局后置钩子
+router.afterEach((to, from) => {
+    // ...
+    document.title = to.meta.title || '黑马'
+});
 
 export default router

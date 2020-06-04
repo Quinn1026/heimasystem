@@ -24,7 +24,7 @@
             class="el-menu-vertical-demo"
             :collapse="isCollapse"
           >
-            <el-menu-item index="/layout/data">
+            <el-menu-item index="/layout/chart">
               <i class="el-icon-pie-chart"></i>
               <span slot="title">数据概览</span>
             </el-menu-item>
