@@ -16,13 +16,13 @@
               v-for="item in subjectList"
               :key="item.id"
               :label="item.name"
-              :value="item.rid"
+              :value="item.id"
             ></el-option>
           </el-select>
         </el-form-item>
         <el-form-item label="阶段" prop="step">
           <el-select v-model="formQuestionEdit.step" placeholder="请选择阶段">
-            <el-option v-for="(item,index) in stepList" :key="index" :label="item" :value="index"></el-option>
+            <el-option v-for="(item,index) in stepList" :key="index" :label="item" :value="+index"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item label="企业" prop="enterprise">
@@ -31,7 +31,7 @@
               v-for="item in enterpriseList"
               :key="item.id"
               :label="item.name"
-              :value="item.eid"
+              :value="item.id"
             ></el-option>
           </el-select>
         </el-form-item>
@@ -45,24 +45,39 @@
         </el-form-item>
         <el-form-item label="题型" prop="type">
           <el-radio-group v-model="formQuestionEdit.type">
-            <el-radio v-for="(item, index) in typeList" :key="index" :label="index">{{item}}</el-radio>
+            <el-radio v-for="(item, index) in typeList" :key="index" :label="+index">{{item}}</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="难度" prop="difficulty">
           <el-radio-group v-model="formQuestionEdit.difficulty">
-            <el-radio v-for="(item, index) in difficultyList" :key="index" :label="index">{{item}}</el-radio>
+            <el-radio v-for="(item, index) in difficultyList" :key="index" :label="+index">{{item}}</el-radio>
           </el-radio-group>
         </el-form-item>
         <hr style="margin-top:20px;margin-bottom:20px" />
         <el-form-item label="标题" prop="title" class="setMargin">
-          <quill-editor v-model="formQuestionEdit.title" :options="editorOption" />
+          <quill-editor
+            v-model="formQuestionEdit.title"
+            @change="onEditorChange('title')"
+            :options="editorOption"
+          />
         </el-form-item>
-        <el-form-item :label="typeList[formQuestionEdit.type]">
+        <el-form-item
+          :label="typeList[formQuestionEdit.type]"
+          :prop="questionTypeValidateObj[formQuestionEdit.type]"
+        >
           <question-type :formQuestionEdit="formQuestionEdit"></question-type>
         </el-form-item>
         <hr style="margin-top:20px;margin-bottom:20px" />
+        <el-form-item label="视频解析" prop="video">
+          <upload type="video" v-model="formQuestionEdit.video"></upload>
+        </el-form-item>
+        <hr style="margin-top:20px;margin-bottom:20px" />
         <el-form-item label="答案解析" prop="answer_analyze" class="setMargin">
-          <quill-editor v-model="formQuestionEdit.answer_analyze" :options="editorOption" />
+          <quill-editor
+            v-model="formQuestionEdit.answer_analyze"
+            @change="onEditorChange('answer_analyze')"
+            :options="editorOption"
+          />
         </el-form-item>
         <hr style="margin-top:20px;margin-bottom:20px" />
         <el-form-item label="试题备注" prop="remark">
@@ -87,6 +102,8 @@ import "quill/dist/quill.bubble.css";
 import { quillEditor } from "vue-quill-editor";
 // 导入题型组件
 import QuestionType from "./question-type";
+// 导入子组件文件上传
+import Upload from "./upload";
 
 export default {
   name: "QuestionEdit",
@@ -99,7 +116,17 @@ export default {
   ],
   components: {
     quillEditor,
-    QuestionType
+    QuestionType,
+    Upload
+  },
+  watch: {
+    dialogVisible(newValue) {
+      if (newValue) {
+        this.$nextTick(() => {
+          this.$refs.formQuestionEdit.clearValidate();
+        });
+      }
+    }
   },
   data() {
     return {
@@ -110,14 +137,22 @@ export default {
         // Some Quill options...
         placeholder: "请在此输入......"
       },
+      questionTypeValidateObj: {
+        1: "single_select_answer", // 单选
+        2: "multiple_select_answer", // 多选
+        3: "short_answer" // 简答
+      },
+      editId: "",
       formQuestionEdit: {
         title: "",
-        type: "1",
+        type: 1,
         subject: "",
         step: "",
         enterprise: "",
-        difficulty: "1",
+        difficulty: 1,
         single_select_answer: "",
+        multiple_select_answer: [],
+        short_answer: "",
         video: "",
         remark: "",
         city: [],
@@ -145,11 +180,73 @@ export default {
           }
         ]
       },
-      rules: {}
+      rules: {
+        subject: [{ required: true, message: "请选择学科", trigger: "change" }],
+        step: [{ required: true, message: "请选择阶段", trigger: "change" }],
+        enterprise: [
+          { required: true, message: "请选择企业", trigger: "change" }
+        ],
+        city: [{ required: true, message: "请选择城市", trigger: "change" }],
+        type: [{ required: true, message: "请选择题型", trigger: "change" }],
+        difficulty: [
+          { required: true, message: "请选择难度", trigger: "change" }
+        ],
+        title: [{ required: true, message: "标题不能为空", trigger: "change" }],
+        single_select_answer: [
+          { required: true, message: "单选答案不能为空", trigger: "change" }
+        ],
+        multiple_select_answer: [
+          { required: true, message: "多选答案不能为空", trigger: "change" }
+        ],
+        short_answer: [
+          { required: true, message: "简答不能为空", trigger: "blur" }
+        ],
+        answer_analyze: [
+          { required: true, message: "答案解析不能为空", trigger: "change" }
+        ],
+        remark: [{ required: true, message: "请输入备注", trigger: "blur" }]
+      }
     };
   },
   methods: {
-    submit() {}
+    submit() {
+      // 校验真个form表单
+      this.$refs.formQuestionEdit.validate(async valid => {
+        if (!valid) return;
+        let res = null;
+        if (this.mode == "add") {
+          res = await this.$axios.post("/question/add", this.formQuestionEdit);
+        } else {
+          this.formQuestionEdit.city = this.formQuestionEdit.city.join(",");
+          res = await this.$axios.post("/question/edit", {
+            id: this.editId,
+            ...this.formQuestionEdit
+          });
+        }
+        if (res.data.code == 200) {
+          this.$message({
+            type: "success",
+            message: this.mode === "add" ? "新增成功~" : "编辑成功~"
+          });
+          this.dialogVisible = false;
+          if (this.mode == "add") {
+            this.$parent.search();
+          } else {
+            this.$parent.getData();
+          }
+        }
+      });
+    },
+    onEditorChange(props) {
+      this.$refs.formQuestionEdit.validateField(props);
+    },
+    questionTypeValidate() {
+      this.$refs.formQuestionEdit.validateField([
+        "single_select_answer",
+        "multiple_select_answer",
+        "short_answer"
+      ]);
+    }
   }
 };
 </script>

@@ -10,7 +10,7 @@
                   v-for="item in subjectList"
                   :key="item.id"
                   :label="item.name"
-                  :value="item.rid"
+                  :value="item.id"
                 ></el-option>
               </el-select>
             </el-form-item>
@@ -34,7 +34,7 @@
                   v-for="item in enterpriseList"
                   :key="item.id"
                   :label="item.name"
-                  :value="item.eid"
+                  :value="item.id"
                 ></el-option>
               </el-select>
             </el-form-item>
@@ -46,7 +46,7 @@
                   v-for="(item,index) in typeList"
                   :key="index"
                   :label="item"
-                  :value="index"
+                  :value="+index"
                 ></el-option>
               </el-select>
             </el-form-item>
@@ -60,7 +60,7 @@
                   v-for="(item,index) in difficultyList"
                   :key="index"
                   :label="item"
-                  :value="index"
+                  :value="+index"
                 ></el-option>
               </el-select>
             </el-form-item>
@@ -198,10 +198,60 @@ export default {
   },
   methods: {
     add() {
+      this.$refs.QuestionEdit.formQuestionEdit = {
+        title: "",
+        type: 1,
+        subject: "",
+        step: "",
+        enterprise: "",
+        difficulty: 1,
+        single_select_answer: "",
+        multiple_select_answer: [],
+        short_answer: "",
+        video: "",
+        remark: "",
+        city: [],
+        answer_analyze: "",
+        select_options: [
+          {
+            label: "A",
+            text: "狗不理",
+            image: ""
+          },
+          {
+            label: "B",
+            text: "猫不理",
+            image: ""
+          },
+          {
+            label: "C",
+            text: "麻花",
+            image: ""
+          },
+          {
+            label: "D",
+            text: "炸酱面",
+            image: ""
+          }
+        ]
+      };
       this.$refs.QuestionEdit.dialogVisible = true;
       this.$refs.QuestionEdit.mode = "add";
     },
     edit(row) {
+      // console.log(row);
+      this.$refs.QuestionEdit.formQuestionEdit = JSON.parse(
+        JSON.stringify(row)
+      );
+      if (row.city) {
+        this.$refs.QuestionEdit.formQuestionEdit.city = row.city.split(",");
+      }
+      if (row.multiple_select_answer) {
+        this.$refs.QuestionEdit.formQuestionEdit.multiple_select_answer = row.multiple_select_answer.split(
+          ","
+        );
+      }
+      this.$refs.QuestionEdit.editId = row.id;
       this.$refs.QuestionEdit.dialogVisible = true;
       this.$refs.QuestionEdit.mode = "edit";
     },
