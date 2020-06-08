@@ -4,7 +4,7 @@
       <el-header>
         <div class="left">
           <i
-            :class="{'el-icon-s-fold':!isCollapse,'el-icon-s-unfold':isCollapse}"
+            :class="[isCollapse ? 'el-icon-s-unfold': 'el-icon-s-fold']"
             @click="isCollapse = !isCollapse"
           ></i>
           <img src="@/assets/layout_icon.png" class="marginlr" />
